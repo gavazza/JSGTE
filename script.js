@@ -98,11 +98,6 @@ function loadTiles() {
   tilesetFileInput.click();
 }
 
-// Carregar tilemap
-function loadMap() {
-  tilemapFileInput.click();
-}
-
 tilesetFileInput.addEventListener('change', () => {
 	const file = tilesetFileInput.files[0];
 	const img = new Image();
@@ -119,22 +114,58 @@ tilesetFileInput.addEventListener('change', () => {
 	img.src = URL.createObjectURL(file);
 });
 
+// Carregar tilemap
+function loadMap() {
+  tilemapFileInput.click();
+}
+
 tilemapFileInput.addEventListener('change', (event) => {
-  const file = event.target.files[0];
+ const file = event.target.files[0];
   if (!file) return;
 
   const reader = new FileReader();
   reader.onload = function(e) {
     try {
-      const loadedData = JSON.parse(e.target.result);
+      const data = JSON.parse(e.target.result);
 
-      // Validação simples
-      if (Array.isArray(loadedData) && loadedData.length === MAP_HEIGHT && loadedData[0].length === MAP_WIDTH) {
-        mapData = loadedData;
-        drawMap();
-      } else {
-        alert("Formato inválido de mapa.");
+      if (!data.tiles || !Array.isArray(data.tiles)) {
+        alert("Arquivo inválido: campo 'tiles' não encontrado.");
+        return;
       }
+
+      if (data.tiles.length !== MAP_HEIGHT || data.tiles[0].length !== MAP_WIDTH) {
+        alert("Tamanho do mapa incompatível com o editor.");
+        return;
+      }
+
+      // Reconstrói os dados
+      mapData = [];
+      roomData = [];
+      specialTileData = [];
+
+      for (let y = 0; y < MAP_HEIGHT; y++) {
+        const mapRow = [];
+        const roomRow = [];
+        const specialRow = [];
+        for (let x = 0; x < MAP_WIDTH; x++) {
+          const tile = data.tiles[y][x];
+          mapRow.push(tile.index);
+          roomRow.push(tile.roomId ?? 0);
+          specialRow.push(tile.type ?? null);
+        }
+        mapData.push(mapRow);
+        roomData.push(roomRow);
+        specialTileData.push(specialRow);
+      }
+
+      selectedTileIndex = data.tilesetIndex ?? 0;
+
+      drawTileset();
+      drawMap();
+      drawRoomOverlay();
+      drawSpecialTileOverlay();
+
+      console.log("Mapa carregado com sucesso.");
     } catch (err) {
       alert("Erro ao carregar o mapa: " + err.message);
     }
@@ -192,15 +223,6 @@ function drawMap() {
 
 // Exportar mapa
 function exportMap() {
-	/*
-	const mapJson = JSON.stringify(mapData);
-	const blob = new Blob([mapJson], { type: "application/json" });
-	const a = document.createElement("a");
-	a.href = URL.createObjectURL(blob);
-	a.download = "map.json";
-	a.click();
-	*/
-	
 	// Constrói a estrutura final
 	const tileObjects = [];
 
@@ -209,9 +231,9 @@ function exportMap() {
 		for (let x = 0; x < MAP_WIDTH; x++) {
 			row.push({
 				index: mapData[y][x],
-				type: null,
-				roomId: roomData[y][x],
-				passageTo: null,
+				type: specialTileData[y][x],
+				roomId: roomData[y][x] === 0 ? null : roomData[y][x],
+				passageTo: null, // (pode implementar futuramente)
 				searchedForTrap: false,
 				searchedForPassage: false
 			});
@@ -220,8 +242,8 @@ function exportMap() {
 	}
 
 	const project = {
-	tiles: tileObjects,
-	tilesetIndex: selectedTileIndex
+		tilesetIndex: selectedTileIndex,
+		tiles: tileObjects
 	};
 
 	const blob = new Blob([JSON.stringify(project, null, 2)], { type: "application/json" });
@@ -503,12 +525,12 @@ let roomMode = false;
 const toggleRoomBtn = document.getElementById('toggleRoomMode');
 const roomSelect   = document.getElementById('roomSelect');
 
-toggleRoomBtn.addEventListener('click', () => {
+toggleRoomBtn.addEventListener('click', (e) => {
   roomMode = !roomMode;
   toggleRoomBtn.textContent = roomMode ? 'Editar Salas (ON)' : 'Editar Salas (OFF)';
   // Limpa qualquer highlight de tile normal
   overlayCtx.clearRect(0, 0, overlayCanvas.width, overlayCanvas.height);
-  if (!roomMode) drawCurrentTile(lastMouseEvent); // volta ao highlight normal
+  if (!roomMode) drawCurrentTile(e); // volta ao highlight normal
   else drawRoomOverlay(); // mostra todos os IDs já atribuídos
 });
 
@@ -555,12 +577,12 @@ let tileMode = false;
 const toggleTileBtn = document.getElementById('toggleTileMode');
 const specialTileSelect   = document.getElementById('specialTileSelect');
 
-toggleTileBtn.addEventListener('click', () => {
+toggleTileBtn.addEventListener('click', (e) => {
   tileMode = !tileMode;
   toggleTileBtn.textContent = tileMode ? 'Editar Tiles (ON)' : 'Editar Tiles (OFF)';
   // Limpa qualquer highlight de tile normal
   overlayCtx.clearRect(0, 0, overlayCanvas.width, overlayCanvas.height);
-  if (!tileMode) drawCurrentTile(lastMouseEvent); // volta ao highlight normal
+  if (!tileMode) drawCurrentTile(e); // volta ao highlight normal
   else drawSpecialTileOverlay(); // mostra todos os tile especiais já atribuídos
 });
 
