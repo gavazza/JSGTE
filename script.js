@@ -175,8 +175,10 @@ overlayCanvas.addEventListener('click', (e) => {
 	}
 	
 	if (isCtrlVPressed) {
-		 const { x: startX, y: startY } = getMouseTile(e);
-
+		const { x: startX, y: startY } = getMouseTile(e);
+		
+		saveState();
+		
 		for (let y = 0; y < copiedArea.length; y++) {
 			for (let x = 0; x < copiedArea[0].length; x++) {
 				const mapX = startX + x;
