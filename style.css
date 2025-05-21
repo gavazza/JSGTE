@@ -1,0 +1,33 @@
+body {
+  margin: 0;
+  font-family: sans-serif;
+}
+
+header {
+  background: #222;
+  color: white;
+  padding: 10px;
+}
+
+nav button {
+  margin-right: 10px;
+}
+
+main {
+  display: flex;
+  height: calc(100vh - 50px);
+  overflow: hidden;
+}
+
+#tilemap-container {
+  flex: 1;
+  overflow: auto;
+  background: #000;
+}
+
+#tileset-container {
+  width: 215px;
+  overflow-y: scroll;
+  border-left: 2px solid #aaa;
+  background: #333;
+}

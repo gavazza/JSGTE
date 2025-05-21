@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8">
+  <title>Editor de Tilemap</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header>
+    <nav>
+      <button onclick="loadTiles()">Carregar Tiles</button>
+	  <button onclick="loadMap()">Carregar Mapa</button>
+      <button onclick="exportMap()">Exportar Mapa</button>
+    </nav>
+  </header>
+  <main>
+	<section id="tileset-container">
+      <canvas id="tilesetCanvas" width="200" height="600"></canvas>
+    </section>
+    <section id="tilemap-container">
+	  <div style="position: relative; width: 13500px; height: 7500px;">
+	    <canvas id="mapCanvas" width="13500" height="7500" style="position: absolute; z-index: 1; pointer-events: none;"></canvas>
+	    <canvas id="overlayCanvas" width="13500" height="7500" style="position: absolute; z-index: 2; pointer-events: auto;"></canvas>
+	  </div>
+    </section>
+    
+  </main>
+  <input type="file" id="tilesetFileInput" accept="image/png" hidden>
+  <input type="file" id="tilemapFileInput" accept=".json" hidden>
+  <script src="script.js"></script>
+</body>
+</html>
