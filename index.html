@@ -11,6 +11,26 @@
       <button onclick="loadTiles()">Carregar Tiles</button>
 	  <button onclick="loadMap()">Carregar Mapa</button>
       <button onclick="exportMap()">Exportar Mapa</button>
+	  <button id="toggleRoomMode">Editar Salas (OFF)</button>
+	
+	  <label for="roomSelect">Sala:</label>
+	  <select id="roomSelect"></select>
+	  
+	  <button id="toggleTileMode">Editar Tiles (OFF)</button>
+	  
+	  <label for="specialTileSelect">Tipo:</label>
+	  <select id="specialTileSelect">
+		<option>trap</option>
+		<option>treasure</option>
+		<option>passage</option>
+	  </select>
+	  
+	  <script>
+		const select = document.getElementById("roomSelect");
+		select.innerHTML = Array.from({ length: 99 }, (_, i) =>
+		  `<option value="${i + 1}">${i + 1}</option>`
+		).join('');
+	  </script>
     </nav>
   </header>
   <main>

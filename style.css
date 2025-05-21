@@ -31,3 +31,17 @@ main {
   border-left: 2px solid #aaa;
   background: #333;
 }
+
+/* dá um espacinho pro select */
+nav #roomSelect {
+  margin-left: 10px;
+  margin-right: 10px;
+  width: 50px;
+}
+
+/* dá um espacinho pro select */
+nav #specialTileSelect {
+  margin-left: 10px;
+  margin-right: 10px;
+  width: 80px;
+}

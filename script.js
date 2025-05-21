@@ -1,3 +1,36 @@
+// index    : index of tileset image
+// type     : null, 'trap', 'treasure' or 'passage'
+//            null    : just shows a tile
+//            trap    : flag indicating if stepped on or identified, must present a trap sprite
+//            treasure: flag indicating if identified, must must present:
+//                      -nothing
+//                      -a treasure sprite
+//                      -a monster
+//            passage : flag indicating if identified, must present a passage sprite and if stepped on,
+//                      player is transported to indicated floor and tilex, tiley on pamater 'passageTo'
+//                      ex.: passageTo = {floor: 0, x: 10, y: 10)
+// roomId    : id of the room this tile is part of.
+// passageTo : object that keep the floor index and x,y position of destination tile				   
+class Tile {
+	constructor(index, type=null, roomId=null, passageTo = null) {
+		this.index = index;
+		this.type = type;
+		this.roomId = roomId;
+		this.passageTo = passageTo;
+		
+		this.searchedForTrap = false;
+		this.searchedForPassage = false;
+	}
+}
+
+// Basically used to control if players already searched for treasure into a room
+class Room {
+	constructor(id) {
+		this.id = id;
+		this.searchedForTreasure = false;
+	}
+}
+
 const TILE_SIZE = 50;
 const MAP_WIDTH = 270;
 const MAP_HEIGHT = 150;
@@ -19,6 +52,12 @@ let selectedTileIndex = 0;
 let tilesPerRow = 0;
 let tileCount = 0;
 let mapData = Array.from({ length: MAP_HEIGHT }, () => Array(MAP_WIDTH).fill(0));
+
+// 0 = sem sala, 1–99 são IDs válidos
+let roomData = Array.from({ length: MAP_HEIGHT }, () => Array(MAP_WIDTH).fill(0));
+
+// special tile
+let specialTileData = Array.from({ length: MAP_HEIGHT }, () => Array(MAP_WIDTH).fill(null));
 
 let isMouseDown = false;
 
@@ -153,8 +192,39 @@ function drawMap() {
 
 // Exportar mapa
 function exportMap() {
+	/*
 	const mapJson = JSON.stringify(mapData);
 	const blob = new Blob([mapJson], { type: "application/json" });
+	const a = document.createElement("a");
+	a.href = URL.createObjectURL(blob);
+	a.download = "map.json";
+	a.click();
+	*/
+	
+	// Constrói a estrutura final
+	const tileObjects = [];
+
+	for (let y = 0; y < MAP_HEIGHT; y++) {
+		const row = [];
+		for (let x = 0; x < MAP_WIDTH; x++) {
+			row.push({
+				index: mapData[y][x],
+				type: null,
+				roomId: roomData[y][x],
+				passageTo: null,
+				searchedForTrap: false,
+				searchedForPassage: false
+			});
+		}
+		tileObjects.push(row);
+	}
+
+	const project = {
+	tiles: tileObjects,
+	tilesetIndex: selectedTileIndex
+	};
+
+	const blob = new Blob([JSON.stringify(project, null, 2)], { type: "application/json" });
 	const a = document.createElement("a");
 	a.href = URL.createObjectURL(blob);
 	a.download = "map.json";
@@ -163,33 +233,61 @@ function exportMap() {
 
 // Evento para clicar na grade e colocar o tile selecionado
 overlayCanvas.addEventListener('click', (e) => {
-	if(!isCtrlCPressed && !isCtrlVPressed) {
-		const rect = overlayCanvas.getBoundingClientRect();
-		const x = Math.floor((e.clientX - rect.left) / TILE_SIZE);
-		const y = Math.floor((e.clientY - rect.top) / TILE_SIZE);
-
-		if (x < MAP_WIDTH && y < MAP_HEIGHT) {
-			mapData[y][x] = selectedTileIndex;
-			drawMap();
-		}
-	}
+	const { x, y } = getMouseTile(e);
 	
-	if (isCtrlVPressed) {
-		const { x: startX, y: startY } = getMouseTile(e);
+	if (roomMode) {
+		// setar o ID da sala
+		const roomId = parseInt(roomSelect.value, 10);
 		
-		saveState();
+		if(roomData[y][x] == roomId) {
+			roomData[y][x] = 0;
+		}
+		else {
+			roomData[y][x] = roomId;
+		}
 		
-		for (let y = 0; y < copiedArea.length; y++) {
-			for (let x = 0; x < copiedArea[0].length; x++) {
-				const mapX = startX + x;
-				const mapY = startY + y;
-				if (mapX < MAP_WIDTH && mapY < MAP_HEIGHT) {
-					mapData[mapY][mapX] = copiedArea[y][x];
-				}
+		drawRoomOverlay();
+	} else if (tileMode) {
+		// setar o tipo do tile
+		const tileType = specialTileSelect.value;
+		
+		if(specialTileData[y][x] == tileType) {
+			specialTileData[y][x] = null;
+		}
+		else {
+			specialTileData[y][x] = tileType;
+		}
+		
+		drawSpecialTileOverlay();
+	} else {
+		if(!isCtrlCPressed && !isCtrlVPressed) {
+			const rect = overlayCanvas.getBoundingClientRect();
+			const x = Math.floor((e.clientX - rect.left) / TILE_SIZE);
+			const y = Math.floor((e.clientY - rect.top) / TILE_SIZE);
+
+			if (x < MAP_WIDTH && y < MAP_HEIGHT) {
+				mapData[y][x] = selectedTileIndex;
+				drawMap();
 			}
 		}
+		
+		if (isCtrlVPressed) {
+			const { x: startX, y: startY } = getMouseTile(e);
+			
+			saveState();
+			
+			for (let y = 0; y < copiedArea.length; y++) {
+				for (let x = 0; x < copiedArea[0].length; x++) {
+					const mapX = startX + x;
+					const mapY = startY + y;
+					if (mapX < MAP_WIDTH && mapY < MAP_HEIGHT) {
+						mapData[mapY][mapX] = copiedArea[y][x];
+					}
+				}
+			}
 
-		drawMap();
+			drawMap();
+		}
 	}
 });
 
@@ -207,18 +305,24 @@ overlayCanvas.addEventListener('mousedown', (e) => {
 });
 
 overlayCanvas.addEventListener('mousemove', (e) => {
-	if (!isCtrlCPressed && !isCtrlVPressed && !isMouseDown) {
-		drawCurrentTile(e);
-	}
-	
-	else if (!isCtrlCPressed && !isCtrlVPressed && isMouseDown) {
-		handlePaint(e);
-		drawCurrentTile(e);
-	}
-	
-	else if (isCtrlCPressed) {
-		selectionEnd = getMouseTile(e);
-		drawOverlay();
+	if (roomMode) {
+		drawRoomOverlay();
+	} else if (tileMode) {
+		drawSpecialTileOverlay();
+	} else {
+		if (!isCtrlCPressed && !isCtrlVPressed && !isMouseDown) {
+			drawCurrentTile(e);
+		}
+		
+		else if (!isCtrlCPressed && !isCtrlVPressed && isMouseDown) {
+			handlePaint(e);
+			drawCurrentTile(e);
+		}
+		
+		else if (isCtrlCPressed) {
+			selectionEnd = getMouseTile(e);
+			drawOverlay();
+		}
 	}
 });
 
@@ -393,3 +497,107 @@ function undo() {
     console.log("Nada para desfazer.");
   }
 }
+
+//// ROOM
+let roomMode = false;
+const toggleRoomBtn = document.getElementById('toggleRoomMode');
+const roomSelect   = document.getElementById('roomSelect');
+
+toggleRoomBtn.addEventListener('click', () => {
+  roomMode = !roomMode;
+  toggleRoomBtn.textContent = roomMode ? 'Editar Salas (ON)' : 'Editar Salas (OFF)';
+  // Limpa qualquer highlight de tile normal
+  overlayCtx.clearRect(0, 0, overlayCanvas.width, overlayCanvas.height);
+  if (!roomMode) drawCurrentTile(lastMouseEvent); // volta ao highlight normal
+  else drawRoomOverlay(); // mostra todos os IDs já atribuídos
+});
+
+
+function drawRoomOverlay() {
+  // Limpa tudo
+  overlayCtx.clearRect(0, 0, overlayCanvas.width, overlayCanvas.height);
+
+  const container = overlayCanvas.parentElement;
+  const scrollLeft = container.scrollLeft;
+  const scrollTop  = container.scrollTop;
+  const viewW = container.clientWidth;
+  const viewH = container.clientHeight;
+
+  const startCol = Math.floor(scrollLeft / TILE_SIZE);
+  const endCol   = Math.min(MAP_WIDTH,  Math.ceil((scrollLeft + viewW) / TILE_SIZE));
+  const startRow = Math.floor(scrollTop  / TILE_SIZE);
+  const endRow   = Math.min(MAP_HEIGHT, Math.ceil((scrollTop  + viewH) / TILE_SIZE));
+
+  overlayCtx.font = '20px sans-serif';
+  overlayCtx.textAlign = 'center';
+  overlayCtx.textBaseline = 'middle';
+
+  for (let y = startRow; y < endRow; y++) {
+    for (let x = startCol; x < endCol; x++) {
+      const roomId = roomData[y][x];
+      if (roomId > 0) {
+        const dx = x * TILE_SIZE;
+        const dy = y * TILE_SIZE;
+        // fundo semitransparente
+        overlayCtx.fillStyle = 'rgba(0, 255, 0, 0.4)';
+        overlayCtx.fillRect(dx, dy, TILE_SIZE, TILE_SIZE);
+        // número da sala
+        overlayCtx.fillStyle = 'white';
+        overlayCtx.fillText(roomId, dx + TILE_SIZE/2, dy + TILE_SIZE/2);
+      }
+    }
+  }
+}
+////
+
+//// SPECIAL TILE
+let tileMode = false;
+const toggleTileBtn = document.getElementById('toggleTileMode');
+const specialTileSelect   = document.getElementById('specialTileSelect');
+
+toggleTileBtn.addEventListener('click', () => {
+  tileMode = !tileMode;
+  toggleTileBtn.textContent = tileMode ? 'Editar Tiles (ON)' : 'Editar Tiles (OFF)';
+  // Limpa qualquer highlight de tile normal
+  overlayCtx.clearRect(0, 0, overlayCanvas.width, overlayCanvas.height);
+  if (!tileMode) drawCurrentTile(lastMouseEvent); // volta ao highlight normal
+  else drawSpecialTileOverlay(); // mostra todos os tile especiais já atribuídos
+});
+
+
+function drawSpecialTileOverlay() {
+  // Limpa tudo
+  overlayCtx.clearRect(0, 0, overlayCanvas.width, overlayCanvas.height);
+
+  const container = overlayCanvas.parentElement;
+  const scrollLeft = container.scrollLeft;
+  const scrollTop  = container.scrollTop;
+  const viewW = container.clientWidth;
+  const viewH = container.clientHeight;
+
+  const startCol = Math.floor(scrollLeft / TILE_SIZE);
+  const endCol   = Math.min(MAP_WIDTH,  Math.ceil((scrollLeft + viewW) / TILE_SIZE));
+  const startRow = Math.floor(scrollTop  / TILE_SIZE);
+  const endRow   = Math.min(MAP_HEIGHT, Math.ceil((scrollTop  + viewH) / TILE_SIZE));
+  
+  overlayCtx.font = '12px sans-serif';
+  overlayCtx.textAlign = 'center';
+  overlayCtx.textBaseline = 'middle';
+
+  for (let y = startRow; y < endRow; y++) {
+    for (let x = startCol; x < endCol; x++) {
+      const tileType = specialTileData[y][x];
+      if (tileType !== null) {
+        const dx = x * TILE_SIZE;
+        const dy = y * TILE_SIZE;
+        // fundo semitransparente
+        overlayCtx.fillStyle = 'rgba(0, 0, 255, 0.4)';
+        overlayCtx.fillRect(dx, dy, TILE_SIZE, TILE_SIZE);
+        // número da sala
+        overlayCtx.fillStyle = 'white';
+        overlayCtx.fillText(tileType, dx + TILE_SIZE/2, dy + TILE_SIZE/2);
+      }
+    }
+  }
+}
+////
