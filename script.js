@@ -59,6 +59,9 @@ let roomData = Array.from({ length: MAP_HEIGHT }, () => Array(MAP_WIDTH).fill(0)
 // special tile
 let specialTileData = Array.from({ length: MAP_HEIGHT }, () => Array(MAP_WIDTH).fill(null));
 
+// passageTo information
+let passageToData = Array.from({ length: MAP_HEIGHT }, () => Array(MAP_WIDTH).fill(null));
+
 let isMouseDown = false;
 
 let isCtrlCPressed = false;
@@ -69,6 +72,8 @@ let selectionEnd = null
 
 let undoStack = [];
 const MAX_UNDO = 50; // evita consumir muita memória
+
+let selectedPassageTile = null;
 
 // Evento para clicar no tileset e selecionar tile
 tilesetCanvas.addEventListener('click', (e) => {
@@ -147,12 +152,20 @@ tilemapFileInput.addEventListener('change', (event) => {
         const mapRow = [];
         const roomRow = [];
         const specialRow = [];
+		
         for (let x = 0; x < MAP_WIDTH; x++) {
           const tile = data.tiles[y][x];
           mapRow.push(tile.index);
           roomRow.push(tile.roomId ?? 0);
           specialRow.push(tile.type ?? null);
+		  
+		  if (tile.type === "passage" && tile.passageTo) {
+            passageToData[y][x] = tile.passageTo;
+		  } else {
+		    passageToData[y][x] = null;
+		  }
         }
+		
         mapData.push(mapRow);
         roomData.push(roomRow);
         specialTileData.push(specialRow);
@@ -233,7 +246,7 @@ function exportMap() {
 				index: mapData[y][x],
 				type: specialTileData[y][x],
 				roomId: roomData[y][x] === 0 ? null : roomData[y][x],
-				passageTo: null, // (pode implementar futuramente)
+				passageTo: specialTileData[y][x] === "passage" ? passageToData[y][x] : null,
 				searchedForTrap: false,
 				searchedForPassage: false
 			});
@@ -279,6 +292,22 @@ overlayCanvas.addEventListener('click', (e) => {
 		else {
 			specialTileData[y][x] = tileType;
 		}
+		
+		////
+		if (tileMode && specialTileData[y][x] === "passage") {
+			// Preencher campos se já existirem
+			const existing = passageToData[y][x] || { floor: 0, x: 0, y: 0 };
+
+			document.getElementById("passageFloor").value = existing.floor;
+			document.getElementById("passageX").value = existing.x;
+			document.getElementById("passageY").value = existing.y;
+
+			// Guardar coordenadas do tile selecionado
+			selectedPassageTile = { x, y };
+
+			document.getElementById("passagePopup").style.display = "flex";
+		}
+		////
 		
 		drawSpecialTileOverlay();
 	} else {
@@ -617,9 +646,41 @@ function drawSpecialTileOverlay() {
         overlayCtx.fillRect(dx, dy, TILE_SIZE, TILE_SIZE);
         // número da sala
         overlayCtx.fillStyle = 'white';
-        overlayCtx.fillText(tileType, dx + TILE_SIZE/2, dy + TILE_SIZE/2);
+		
+		if(tileType === 'trap' || tileType === 'treasure') {
+			overlayCtx.fillText(tileType, dx + TILE_SIZE/2, dy + TILE_SIZE/2);
+		} else {
+			overlayCtx.fillText(tileType, dx + TILE_SIZE/2, (dy + TILE_SIZE/2) - 15);
+			
+			if (passageToData[y][x] !== null) {
+				overlayCtx.fillText(passageToData[y][x].floor, dx + TILE_SIZE/2, dy + TILE_SIZE/2);
+				overlayCtx.fillText(passageToData[y][x].x + ',' +  passageToData[y][x].y, dx + TILE_SIZE/2, (dy + TILE_SIZE/2) + 15);
+			}
+		}
       }
     }
   }
 }
+////
+
+//// passageTo
+document.getElementById("savePassageBtn").addEventListener("click", () => {
+  if (!selectedPassageTile) return;
+
+  const floor = parseInt(document.getElementById("passageFloor").value);
+  const x = parseInt(document.getElementById("passageX").value);
+  const y = parseInt(document.getElementById("passageY").value);
+
+  passageToData[selectedPassageTile.y][selectedPassageTile.x] = { floor, x, y };
+
+  document.getElementById("passagePopup").style.display = "none";
+  selectedPassageTile = null;
+
+  drawSpecialTileOverlay();
+});
+
+document.getElementById("cancelPassageBtn").addEventListener("click", () => {
+  document.getElementById("passagePopup").style.display = "none";
+  selectedPassageTile = null;
+});
 ////
