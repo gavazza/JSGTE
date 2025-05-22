@@ -57,11 +57,13 @@ nav #specialTileSelect {
   align-items: center;
   justify-content: center;
 }
+
 .modal-content {
   background: white;
   padding: 20px;
   border-radius: 8px;
 }
+
 .modal-content input {
   margin: 5px 0;
   width: 100px;

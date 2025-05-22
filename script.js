@@ -236,6 +236,9 @@ function drawMap() {
 
 // Exportar mapa
 function exportMap() {
+    const filename = prompt("Salvar como:", "");
+    if (!filename) return; // cancelado
+  
 	// Constrói a estrutura final
 	const tileObjects = [];
 
@@ -246,9 +249,7 @@ function exportMap() {
 				index: mapData[y][x],
 				type: specialTileData[y][x],
 				roomId: roomData[y][x] === 0 ? null : roomData[y][x],
-				passageTo: specialTileData[y][x] === "passage" ? passageToData[y][x] : null,
-				searchedForTrap: false,
-				searchedForPassage: false
+				passageTo: specialTileData[y][x] === "passage" ? passageToData[y][x] : null
 			});
 		}
 		tileObjects.push(row);
@@ -262,7 +263,7 @@ function exportMap() {
 	const blob = new Blob([JSON.stringify(project, null, 2)], { type: "application/json" });
 	const a = document.createElement("a");
 	a.href = URL.createObjectURL(blob);
-	a.download = "map.json";
+	a.download = filename;
 	a.click();
 }
 
@@ -274,14 +275,17 @@ overlayCanvas.addEventListener('click', (e) => {
 		// setar o ID da sala
 		const roomId = parseInt(roomSelect.value, 10);
 		
-		if(roomData[y][x] == roomId) {
-			roomData[y][x] = 0;
-		}
-		else {
-			roomData[y][x] = roomId;
-		}
+		if (mapData[y][x] > 0) {
 		
-		drawRoomOverlay();
+			if(roomData[y][x] == roomId) {
+				roomData[y][x] = 0;
+			}
+			else {
+				roomData[y][x] = roomId;
+			}
+			
+			drawRoomOverlay();
+		}
 	} else if (tileMode) {
 		// setar o tipo do tile
 		const tileType = specialTileSelect.value;
@@ -296,9 +300,9 @@ overlayCanvas.addEventListener('click', (e) => {
 		////
 		if (tileMode && specialTileData[y][x] === "passage") {
 			// Preencher campos se já existirem
-			const existing = passageToData[y][x] || { floor: 0, x: 0, y: 0 };
+			const existing = passageToData[y][x] || { f: 0, x: 0, y: 0 };
 
-			document.getElementById("passageFloor").value = existing.floor;
+			document.getElementById("passageFloor").value = existing.f;
 			document.getElementById("passageX").value = existing.x;
 			document.getElementById("passageY").value = existing.y;
 
@@ -343,15 +347,21 @@ overlayCanvas.addEventListener('click', (e) => {
 });
 
 overlayCanvas.addEventListener('mousedown', (e) => {
-	if(!isCtrlCPressed && !isCtrlVPressed) {
-		isMouseDown = true;
-		handlePaint(e);
+	if (roomMode) {
 	}
-	
-	if (isCtrlCPressed) {
-		selectionStart = getMouseTile(e);
-		selectionEnd = null;
-		drawOverlay();
+	else if (tileMode) {
+	}
+	else {
+		if(!isCtrlCPressed && !isCtrlVPressed) {
+			isMouseDown = true;
+			handlePaint(e);
+		}
+		
+		if (isCtrlCPressed) {
+			selectionStart = getMouseTile(e);
+			selectionEnd = null;
+			drawOverlay();
+		}
 	}
 });
 
@@ -605,10 +615,11 @@ function drawRoomOverlay() {
 let tileMode = false;
 const toggleTileBtn = document.getElementById('toggleTileMode');
 const specialTileSelect   = document.getElementById('specialTileSelect');
-
+	
 toggleTileBtn.addEventListener('click', (e) => {
   tileMode = !tileMode;
   toggleTileBtn.textContent = tileMode ? 'Editar Tiles (ON)' : 'Editar Tiles (OFF)';
+  
   // Limpa qualquer highlight de tile normal
   overlayCtx.clearRect(0, 0, overlayCanvas.width, overlayCanvas.height);
   if (!tileMode) drawCurrentTile(e); // volta ao highlight normal
@@ -653,7 +664,7 @@ function drawSpecialTileOverlay() {
 			overlayCtx.fillText(tileType, dx + TILE_SIZE/2, (dy + TILE_SIZE/2) - 15);
 			
 			if (passageToData[y][x] !== null) {
-				overlayCtx.fillText(passageToData[y][x].floor, dx + TILE_SIZE/2, dy + TILE_SIZE/2);
+				overlayCtx.fillText(passageToData[y][x].f, dx + TILE_SIZE/2, dy + TILE_SIZE/2);
 				overlayCtx.fillText(passageToData[y][x].x + ',' +  passageToData[y][x].y, dx + TILE_SIZE/2, (dy + TILE_SIZE/2) + 15);
 			}
 		}
@@ -667,11 +678,11 @@ function drawSpecialTileOverlay() {
 document.getElementById("savePassageBtn").addEventListener("click", () => {
   if (!selectedPassageTile) return;
 
-  const floor = parseInt(document.getElementById("passageFloor").value);
+  const f = parseInt(document.getElementById("passageFloor").value);
   const x = parseInt(document.getElementById("passageX").value);
   const y = parseInt(document.getElementById("passageY").value);
 
-  passageToData[selectedPassageTile.y][selectedPassageTile.x] = { floor, x, y };
+  passageToData[selectedPassageTile.y][selectedPassageTile.x] = { f, x, y };
 
   document.getElementById("passagePopup").style.display = "none";
   selectedPassageTile = null;
