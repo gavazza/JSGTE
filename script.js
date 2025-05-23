@@ -51,16 +51,16 @@ let tilesetImage = null;
 let selectedTileIndex = 0;
 let tilesPerRow = 0;
 let tileCount = 0;
-let mapData = Array.from({ length: MAP_HEIGHT }, () => Array(MAP_WIDTH).fill(0));
 
-// 0 = sem sala, 1–99 são IDs válidos
-let roomData = Array.from({ length: MAP_HEIGHT }, () => Array(MAP_WIDTH).fill(0));
-
-// special tile
-let specialTileData = Array.from({ length: MAP_HEIGHT }, () => Array(MAP_WIDTH).fill(null));
-
-// passageTo information
-let passageToData = Array.from({ length: MAP_HEIGHT }, () => Array(MAP_WIDTH).fill(null));
+// Nova estrutura unificada
+let tileData = Array.from({ length: MAP_HEIGHT }, () =>
+  Array.from({ length: MAP_WIDTH }, () => ({
+    index: 0,
+    type: null,
+    roomId: 0,
+    passageTo: null
+  }))
+);
 
 let isMouseDown = false;
 
@@ -146,31 +146,19 @@ tilemapFileInput.addEventListener('change', (event) => {
       }
 
       // Reconstrói os dados
-      mapData = [];
-      roomData = [];
-      specialTileData = [];
-
+      tileData = [];
       for (let y = 0; y < MAP_HEIGHT; y++) {
-        const mapRow = [];
-        const roomRow = [];
-        const specialRow = [];
-		
+        const row = [];
         for (let x = 0; x < MAP_WIDTH; x++) {
           const tile = data.tiles[y][x];
-          mapRow.push(tile.index);
-          roomRow.push(tile.roomId ?? 0);
-          specialRow.push(tile.type ?? null);
-		  
-		  if (tile.type === "passage" && tile.passageTo) {
-            passageToData[y][x] = tile.passageTo;
-		  } else {
-		    passageToData[y][x] = null;
-		  }
+          row.push({
+            index: tile.index,
+            type: tile.type ?? null,
+            roomId: tile.roomId ?? 0,
+            passageTo: tile.passageTo ?? null
+          });
         }
-		
-        mapData.push(mapRow);
-        roomData.push(roomRow);
-        specialTileData.push(specialRow);
+        tileData.push(row);
       }
 
       selectedTileIndex = data.tilesetIndex ?? 0;
@@ -223,7 +211,7 @@ function drawMap() {
 	// Desenha apenas os tiles visíveis
 	for (let y = startRow; y < endRow; y++) {
 		for (let x = startCol; x < endCol; x++) {
-			const index = mapData[y][x];
+			const index = tileData[y][x].index;
 			const sx = (index % tilesPerRow) * TILE_SIZE;
 			const sy = Math.floor(index / tilesPerRow) * TILE_SIZE;
 			const dx = x * TILE_SIZE;
@@ -241,32 +229,33 @@ function exportMap() {
     const filename = prompt("Salvar como:", "");
     if (!filename) return; // cancelado
   
-	// Constrói a estrutura final
-	const tileObjects = [];
+  // Constrói a estrutura final
+  const tileObjects = [];
 
-	for (let y = 0; y < MAP_HEIGHT; y++) {
-		const row = [];
-		for (let x = 0; x < MAP_WIDTH; x++) {
-			row.push({
-				index: mapData[y][x],
-				type: specialTileData[y][x],
-				roomId: roomData[y][x] === 0 ? null : roomData[y][x],
-				passageTo: specialTileData[y][x] === "passage" ? passageToData[y][x] : null
-			});
-		}
-		tileObjects.push(row);
-	}
+  for (let y = 0; y < MAP_HEIGHT; y++) {
+    const row = [];
+    for (let x = 0; x < MAP_WIDTH; x++) {
+      const t = tileData[y][x];
+      row.push({
+        index: t.index,
+        type: t.type,
+        roomId: t.roomId === 0 ? null : t.roomId,
+        passageTo: t.type === "passage" ? t.passageTo : null
+      });
+    }
+    tileObjects.push(row);
+  }
 
-	const project = {
-		tilesetIndex: selectedTileIndex,
-		tiles: tileObjects
-	};
+  const project = {
+    tilesetIndex: selectedTileIndex,
+    tiles: tileObjects
+  };
 
-	const blob = new Blob([JSON.stringify(project, null, 2)], { type: "application/json" });
-	const a = document.createElement("a");
-	a.href = URL.createObjectURL(blob);
-	a.download = filename;
-	a.click();
+  const blob = new Blob([JSON.stringify(project, null, 2)], { type: "application/json" });
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = filename;
+  a.click();
 }
 
 // Evento para clicar na grade e colocar o tile selecionado
@@ -277,13 +266,13 @@ overlayCanvas.addEventListener('click', (e) => {
 		// setar o ID da sala
 		const roomId = parseInt(roomSelect.value, 10);
 		
-		if (mapData[y][x] > 0) {
+		if (tileData[y][x].index > 0) {
 		
-			if(roomData[y][x] == roomId) {
-				roomData[y][x] = 0;
+			if(tileData[y][x].roomId == roomId) {
+				tileData[y][x].roomId = 0;
 			}
 			else {
-				roomData[y][x] = roomId;
+				tileData[y][x].roomId = roomId;
 			}
 			
 			drawRoomOverlay();
@@ -292,17 +281,17 @@ overlayCanvas.addEventListener('click', (e) => {
 		// setar o tipo do tile
 		const tileType = specialTileSelect.value;
 		
-		if(specialTileData[y][x] == tileType) {
-			specialTileData[y][x] = null;
+		if(tileData[y][x].type == tileType) {
+			tileData[y][x].type = null;
 		}
 		else {
-			specialTileData[y][x] = tileType;
+			tileData[y][x].type = tileType;
 		}
 		
 		////
-		if (tileMode && specialTileData[y][x] === "passage") {
+		if (tileMode && tileData[y][x].type === "passage") {
 			// Preencher campos se já existirem
-			const existing = passageToData[y][x] || { f: 0, x: 0, y: 0 };
+			const existing = tileData[y][x].passageTo || { f: 0, x: 0, y: 0 };
 
 			document.getElementById("passageFloor").value = existing.f;
 			document.getElementById("passageX").value = existing.x;
@@ -323,7 +312,7 @@ overlayCanvas.addEventListener('click', (e) => {
 			const y = Math.floor((e.clientY - rect.top) / TILE_SIZE);
 
 			if (x < MAP_WIDTH && y < MAP_HEIGHT) {
-				mapData[y][x] = selectedTileIndex;
+				tileData[y][x].index = selectedTileIndex;
 				drawMap();
 			}
 		}
@@ -338,7 +327,7 @@ overlayCanvas.addEventListener('click', (e) => {
 					const mapX = startX + x;
 					const mapY = startY + y;
 					if (mapX < MAP_WIDTH && mapY < MAP_HEIGHT) {
-						mapData[mapY][mapX] = copiedArea[y][x];
+						tileData[mapY][mapX].index = copiedArea[y][x].index;
 					}
 				}
 			}
@@ -408,7 +397,7 @@ overlayCanvas.addEventListener('mouseup', () => {
 			const row = [];
 			
 			for (let x = x0; x <= x1; x++) {
-				row.push(mapData[y][x]);
+				row.push({ ...tileData[y][x] });
 			}
 			
 			copiedArea.push(row);
@@ -456,9 +445,9 @@ function handlePaint(e) {
 
 	if (tileX >= 0 && tileX < MAP_WIDTH &&
 	    tileY >= 0 && tileY < MAP_HEIGHT &&
-	    mapData[tileY][tileX] !== selectedTileIndex) {
+	    tileData[tileY][tileX].index !== selectedTileIndex) {
 		saveState(); // Salva o estado antes de modificar
-		mapData[tileY][tileX] = selectedTileIndex;
+		tileData[tileY][tileX].index = selectedTileIndex;
 		drawMap();
 	}
 }
@@ -544,7 +533,7 @@ function drawOverlay(mouseTile) {
 
 function saveState() {
   // Salva uma cópia profunda do estado atual
-  const copy = mapData.map(row => [...row]);
+  const copy = tileData.map(row => row.map(cell => ({ ...cell })));
   undoStack.push(copy);
 
   if (undoStack.length > MAX_UNDO) {
@@ -554,8 +543,10 @@ function saveState() {
 
 function undo() {
   if (undoStack.length > 0) {
-    mapData = undoStack.pop();
+    tileData = undoStack.pop();
     drawMap();
+    drawRoomOverlay();
+    drawSpecialTileOverlay();
   } else {
     console.log("Nada para desfazer.");
   }
@@ -597,7 +588,7 @@ function drawRoomOverlay() {
 
   for (let y = startRow; y < endRow; y++) {
     for (let x = startCol; x < endCol; x++) {
-      const roomId = roomData[y][x];
+      const roomId = tileData[y][x].roomId;
       if (roomId > 0) {
         const dx = x * TILE_SIZE;
         const dy = y * TILE_SIZE;
@@ -650,7 +641,7 @@ function drawSpecialTileOverlay() {
 
   for (let y = startRow; y < endRow; y++) {
     for (let x = startCol; x < endCol; x++) {
-      const tileType = specialTileData[y][x];
+      const tileType = tileData[y][x].type;
       if (tileType !== null) {
         const dx = x * TILE_SIZE;
         const dy = y * TILE_SIZE;
@@ -665,9 +656,9 @@ function drawSpecialTileOverlay() {
 		} else {
 			overlayCtx.fillText(tileType, dx + TILE_SIZE/2, (dy + TILE_SIZE/2) - 15);
 			
-			if (passageToData[y][x] !== null) {
-				overlayCtx.fillText(passageToData[y][x].f, dx + TILE_SIZE/2, dy + TILE_SIZE/2);
-				overlayCtx.fillText(passageToData[y][x].x + ',' +  passageToData[y][x].y, dx + TILE_SIZE/2, (dy + TILE_SIZE/2) + 15);
+			if (tileData[y][x].passageTo !== null) {
+				overlayCtx.fillText(tileData[y][x].passageTo.f, dx + TILE_SIZE/2, dy + TILE_SIZE/2);
+				overlayCtx.fillText(tileData[y][x].passageTo.x + ',' +  tileData[y][x].passageTo.y, dx + TILE_SIZE/2, (dy + TILE_SIZE/2) + 15);
 			}
 		}
       }
@@ -684,7 +675,7 @@ document.getElementById("savePassageBtn").addEventListener("click", () => {
   const x = parseInt(document.getElementById("passageX").value);
   const y = parseInt(document.getElementById("passageY").value);
 
-  passageToData[selectedPassageTile.y][selectedPassageTile.x] = { f, x, y };
+  tileData[selectedPassageTile.y][selectedPassageTile.x].passageTo = { f, x, y };
 
   document.getElementById("passagePopup").style.display = "none";
   selectedPassageTile = null;
