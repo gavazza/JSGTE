@@ -12,14 +12,16 @@
 // roomId    : id of the room this tile is part of.
 // passageTo : object that keep the floor index and x,y position of destination tile				   
 class Tile {
-	constructor(index, type=null, roomId=null, passageTo = null) {
+	constructor(index, type=null, roomId=null, passageTo = null, enemyIndex = null) {
 		this.index = index;
 		this.type = type;
 		this.roomId = roomId;
 		this.passageTo = passageTo;
+		this.enemyIndex = enemyIndex;
 		
 		this.searchedForTrap = false;
 		this.searchedForPassage = false;
+		this.enemySpawned = false;
 	}
 }
 
@@ -155,6 +157,7 @@ tilemapFileInput.addEventListener('change', (event) => {
             index: tile.index,
             type: tile.type ?? null,
             roomId: tile.roomId ?? 0,
+			enemyIndex: tile.enemyIndex ?? null,
             passageTo: tile.passageTo ?? null
           });
         }
@@ -222,6 +225,8 @@ function drawMap() {
 			}
 		}
 	}
+	
+	//drawEnemyOverlay();
 }
 
 // Exportar mapa
@@ -240,6 +245,7 @@ function exportMap() {
         index: t.index,
         type: t.type,
         roomId: t.roomId === 0 ? null : t.roomId,
+		enemyIndex: t.enemyIndex ?? null,
         passageTo: t.type === "passage" ? t.passageTo : null
       });
     }
@@ -305,7 +311,22 @@ overlayCanvas.addEventListener('click', (e) => {
 		////
 		
 		drawSpecialTileOverlay();
-	} else {
+	} 
+	
+	else if (enemyMode) {
+	  const index = parseInt(enemySelect.value);
+	  
+	  if(tileData[y][x].enemyIndex == index) {
+		tileData[y][x].enemyIndex = null;
+	  }
+	  else {
+		tileData[y][x].enemyIndex = index;
+	  }
+	  
+	  drawEnemyOverlay();
+	}
+	
+	else {
 		if(!isCtrlCPressed && !isCtrlVPressed) {
 			const rect = overlayCanvas.getBoundingClientRect();
 			const x = Math.floor((e.clientX - rect.left) / TILE_SIZE);
@@ -361,7 +382,11 @@ overlayCanvas.addEventListener('mousemove', (e) => {
 		drawRoomOverlay();
 	} else if (tileMode) {
 		drawSpecialTileOverlay();
-	} else {
+	} 
+	else if (enemyMode) {
+		drawEnemyOverlay();
+	}
+	else {
 		if (!isCtrlCPressed && !isCtrlVPressed && !isMouseDown) {
 			drawCurrentTile(e);
 		}
@@ -433,6 +458,8 @@ function drawCurrentTile(e) {
 }
 
 function handlePaint(e) {
+	if (enemyMode) return;
+	 
 	const rect = overlayCanvas.getBoundingClientRect();
 	const scrollLeft = overlayCanvas.parentElement.scrollLeft;
 	const scrollTop = overlayCanvas.parentElement.scrollTop;
@@ -687,4 +714,92 @@ document.getElementById("cancelPassageBtn").addEventListener("click", () => {
   document.getElementById("passagePopup").style.display = "none";
   selectedPassageTile = null;
 });
+////
+
+////
+let enemyImage = null;
+let enemyNames = []; // Lista de nomes visíveis no combo
+let enemyMode = false;
+let selectedEnemyIndex = 0;
+
+const enemyFileInput = document.getElementById("enemyFileInput");
+const toggleEnemyBtn = document.getElementById("toggleEnemyMode");
+const enemySelect = document.getElementById("enemySelect");
+
+// Define nomes de inimigos (você pode adaptar)
+enemyNames = ["Goblin", "Orc", "Rat", "Bat", "Skeleton", "Slime", "Spider"];
+
+enemyNames.forEach((name, index) => {
+  const option = document.createElement("option");
+  option.value = index;
+  option.textContent = name;
+  enemySelect.appendChild(option);
+});
+
+function loadEnemies() {
+  enemyFileInput.click();
+}
+
+enemyFileInput.addEventListener('change', () => {
+  const file = enemyFileInput.files[0];
+  const img = new Image();
+
+  img.onload = () => {
+    enemyImage = img;
+    console.log("Imagem de inimigos carregada.");
+  };
+
+  img.src = URL.createObjectURL(file);
+});
+
+toggleEnemyBtn.addEventListener("click", () => {
+  enemyMode = !enemyMode;
+  toggleEnemyBtn.textContent = enemyMode ? "Adicionar Inimigo (ON)" : "Adicionar Inimigo (OFF)";
+});
+
+function drawEnemyOverlay() {
+  if (!enemyImage) return;
+
+  overlayCtx.clearRect(0, 0, overlayCanvas.width, overlayCanvas.height);
+
+  const container = overlayCanvas.parentElement;
+  const scrollLeft = container.scrollLeft;
+  const scrollTop = container.scrollTop;
+  const viewW = container.clientWidth;
+  const viewH = container.clientHeight;
+
+  const startCol = Math.floor(scrollLeft / TILE_SIZE);
+  const endCol   = Math.min(MAP_WIDTH, Math.ceil((scrollLeft + viewW) / TILE_SIZE));
+  const startRow = Math.floor(scrollTop / TILE_SIZE);
+  const endRow   = Math.min(MAP_HEIGHT, Math.ceil((scrollTop + viewH) / TILE_SIZE));
+
+  const SPRITE_SIZE = 512;
+  const SCALE = 0.25;
+  const DRAW_SIZE = SPRITE_SIZE * SCALE; // 128
+  const enemiesPerRow = Math.floor(enemyImage.width / SPRITE_SIZE);
+
+  for (let y = startRow; y < endRow; y++) {
+    for (let x = startCol; x < endCol; x++) {
+      const tile = tileData[y][x];
+      if (tile.enemyIndex !== null && !isNaN(tile.enemyIndex)) {
+        const enemyIdx = tile.enemyIndex;
+
+        const sx = (enemyIdx % enemiesPerRow) * SPRITE_SIZE;
+        const sy = Math.floor(enemyIdx / enemiesPerRow) * SPRITE_SIZE;
+
+        const dx = x * TILE_SIZE + (TILE_SIZE - DRAW_SIZE) / 2;
+        //const dy = y * TILE_SIZE + (TILE_SIZE - DRAW_SIZE) / 2;
+		const dy = y * TILE_SIZE - 94;
+
+        overlayCtx.drawImage(
+          enemyImage,
+          sx, sy,
+          SPRITE_SIZE, SPRITE_SIZE,
+          dx, dy,
+          DRAW_SIZE, DRAW_SIZE
+        );
+      }
+    }
+  }
+}
 ////

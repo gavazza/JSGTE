@@ -25,6 +25,11 @@
 		<option>passage</option>
 	  </select>
 	  
+	  <button onclick="loadEnemies()">Carregar Inimigos</button>
+	  <button id="toggleEnemyMode">Adicionar Inimigo (OFF)</button>
+	  <label for="enemySelect">Inimigo:</label>
+	  <select id="enemySelect"></select>
+
 	  <span id="loadedFileName" style="margin-left: 20px; font-style: italic; color: #ccc;"></span>
 	  
 	  <script>
@@ -59,6 +64,9 @@
   </main>
   <input type="file" id="tilesetFileInput" accept="image/png" hidden>
   <input type="file" id="tilemapFileInput" accept=".json" hidden>
+  
+  <input type="file" id="enemyFileInput" accept="image/png" hidden>
+  
   <script src="script.js"></script>
 </body>
 </html>
