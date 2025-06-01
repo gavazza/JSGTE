@@ -59,8 +59,8 @@ let tileData = Array.from({ length: MAP_HEIGHT }, () =>
   Array.from({ length: MAP_WIDTH }, () => ({
     index: 0,
     type: null,
+	typeData: null,
     roomId: 0,
-    passageTo: null
   }))
 );
 
@@ -156,9 +156,8 @@ tilemapFileInput.addEventListener('change', (event) => {
           row.push({
             index: tile.index,
             type: tile.type ?? null,
-            roomId: tile.roomId ?? 0,
-			enemyIndex: tile.enemyIndex ?? null,
-            passageTo: tile.passageTo ?? null
+			typeData: tile.typeData ?? null,
+            roomId: tile.roomId ?? null
           });
         }
         tileData.push(row);
@@ -244,9 +243,8 @@ function exportMap() {
       row.push({
         index: t.index,
         type: t.type,
-        roomId: t.roomId === 0 ? null : t.roomId,
-		enemyIndex: t.enemyIndex ?? null,
-        passageTo: t.type === "passage" ? t.passageTo : null
+		typeData: t.typeData,
+        roomId: t.roomId
       });
     }
     tileObjects.push(row);
@@ -680,12 +678,12 @@ function drawSpecialTileOverlay() {
 		
 		if(tileType === 'trap' || tileType === 'treasure') {
 			overlayCtx.fillText(tileType, dx + TILE_SIZE/2, dy + TILE_SIZE/2);
-		} else {
+		} else if(tileType === 'passage') {
 			overlayCtx.fillText(tileType, dx + TILE_SIZE/2, (dy + TILE_SIZE/2) - 15);
 			
 			if (tileData[y][x].passageTo !== null) {
-				overlayCtx.fillText(tileData[y][x].passageTo.f, dx + TILE_SIZE/2, dy + TILE_SIZE/2);
-				overlayCtx.fillText(tileData[y][x].passageTo.x + ',' +  tileData[y][x].passageTo.y, dx + TILE_SIZE/2, (dy + TILE_SIZE/2) + 15);
+				overlayCtx.fillText(tileData[y][x].dataType.floor, dx + TILE_SIZE/2, dy + TILE_SIZE/2);
+				overlayCtx.fillText(tileData[y][x].dataType.x + ',' +  tileData[y][x].dataType.y, dx + TILE_SIZE/2, (dy + TILE_SIZE/2) + 15);
 			}
 		}
       }
@@ -702,7 +700,7 @@ document.getElementById("savePassageBtn").addEventListener("click", () => {
   const x = parseInt(document.getElementById("passageX").value);
   const y = parseInt(document.getElementById("passageY").value);
 
-  tileData[selectedPassageTile.y][selectedPassageTile.x].passageTo = { f, x, y };
+  tileData[selectedPassageTile.y][selectedPassageTile.x].typeData = { floor: f, x: x, y: y };
 
   document.getElementById("passagePopup").style.display = "none";
   selectedPassageTile = null;
