@@ -580,7 +580,6 @@ function undo() {
 //// ROOM
 let roomMode = false;
 const roomSelectContainer = document.getElementById('roomSelectContainer');
-const toggleRoomBtn = document.getElementById('toggleRoomMode');
 const roomSelect = document.getElementById('roomSelect');
 
 
@@ -624,7 +623,6 @@ function drawRoomOverlay() {
 //// SPECIAL TILE
 let tileMode = false;
 const tileSelectContainer = document.getElementById('tileSelectContainer');
-const toggleTileBtn = document.getElementById('toggleTileMode');
 const specialTileSelect   = document.getElementById('specialTileSelect');
 
 function drawSpecialTileOverlay() {
@@ -663,9 +661,9 @@ function drawSpecialTileOverlay() {
 		} else if(tileType === 'passage') {
 			overlayCtx.fillText(tileType, dx + TILE_SIZE/2, (dy + TILE_SIZE/2) - 15);
 			
-			if (tileData[y][x].passageTo !== null) {
-				overlayCtx.fillText(tileData[y][x].dataType.floor, dx + TILE_SIZE/2, dy + TILE_SIZE/2);
-				overlayCtx.fillText(tileData[y][x].dataType.x + ',' +  tileData[y][x].dataType.y, dx + TILE_SIZE/2, (dy + TILE_SIZE/2) + 15);
+			if (tileData[y][x].typeData !== null) {
+				overlayCtx.fillText(tileData[y][x].typeData.floor, dx + TILE_SIZE/2, dy + TILE_SIZE/2);
+				overlayCtx.fillText(tileData[y][x].typeData.x + ',' +  tileData[y][x].typeData.y, dx + TILE_SIZE/2, (dy + TILE_SIZE/2) + 15);
 			}
 		}
       }
@@ -678,11 +676,11 @@ function drawSpecialTileOverlay() {
 document.getElementById("savePassageBtn").addEventListener("click", () => {
   if (!selectedPassageTile) return;
 
-  const f = parseInt(document.getElementById("passageFloor").value);
+  const floor = parseInt(document.getElementById("passageFloor").value);
   const x = parseInt(document.getElementById("passageX").value);
   const y = parseInt(document.getElementById("passageY").value);
 
-  tileData[selectedPassageTile.y][selectedPassageTile.x].typeData = { floor: f, x: x, y: y };
+  tileData[selectedPassageTile.y][selectedPassageTile.x].typeData = { floor, x, y };
 
   document.getElementById("passagePopup").style.display = "none";
   selectedPassageTile = null;
@@ -764,7 +762,6 @@ function drawEnemyOverlay() {
         const sy = Math.floor(enemyIdx / enemiesPerRow) * SPRITE_SIZE;
 
         const dx = x * TILE_SIZE + (TILE_SIZE - DRAW_SIZE) / 2;
-        //const dy = y * TILE_SIZE + (TILE_SIZE - DRAW_SIZE) / 2;
 		const dy = y * TILE_SIZE - 94;
 
         overlayCtx.drawImage(
@@ -824,14 +821,12 @@ editMapRadio.addEventListener('change', (e) => {
 
 // Tile
 editTileRadio.addEventListener('change', (e) => {
-  console.log('entrou editTileRadio');
   if (editTileRadio.checked) {
     resetEditModes(e);
     tileMode = true;
     tileSelectContainer.style.display = 'inline-block';
     drawSpecialTileOverlay();
   }
-  console.log('saiu editTileRadio');
 });
 
 // Sala
