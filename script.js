@@ -757,8 +757,8 @@ function drawEnemyOverlay() {
   for (let y = startRow; y < endRow; y++) {
     for (let x = startCol; x < endCol; x++) {
       const tile = tileData[y][x];
-      if (tile.enemyIndex !== null && !isNaN(tile.enemyIndex)) {
-        const enemyIdx = tile.enemyIndex;
+      if (tile.type === 'enemy' && tile.typeData !== null && !isNaN(tile.typeData)) {
+        const enemyIdx = tile.typeData;
 
         const sx = (enemyIdx % enemiesPerRow) * SPRITE_SIZE;
         const sy = Math.floor(enemyIdx / enemiesPerRow) * SPRITE_SIZE;
@@ -850,7 +850,8 @@ editEnemyRadio.addEventListener('change', (e) => {
     resetEditModes(e);
     enemyMode = true;
     enemySelectContainer.style.display = 'inline-block';
-    drawEnemyOverlay && drawEnemyOverlay();
+    //drawEnemyOverlay && drawEnemyOverlay();
+	drawEnemyOverlay();
   }
 });
 ////
