@@ -633,13 +633,15 @@ function drawRoomOverlay() {
 
 //// SPECIAL TILE
 let tileMode = false;
+const tileSelectContainer = document.getElementById('tileSelectContainer');
 const toggleTileBtn = document.getElementById('toggleTileMode');
 const specialTileSelect   = document.getElementById('specialTileSelect');
 	
 toggleTileBtn.addEventListener('click', (e) => {
   tileMode = !tileMode;
   toggleTileBtn.textContent = tileMode ? 'Editar Tiles (ON)' : 'Editar Tiles (OFF)';
-  
+  // Mostra ou esconde o container do select de sala
+  tileSelectContainer.style.display = tileMode ? 'inline-block' : 'none';
   // Limpa qualquer highlight de tile normal
   overlayCtx.clearRect(0, 0, overlayCanvas.width, overlayCanvas.height);
   if (!tileMode) drawCurrentTile(e); // volta ao highlight normal
@@ -725,6 +727,7 @@ let selectedEnemyIndex = 0;
 const enemyFileInput = document.getElementById("enemyFileInput");
 const toggleEnemyBtn = document.getElementById("toggleEnemyMode");
 const enemySelect = document.getElementById("enemySelect");
+const enemySelectContainer = document.getElementById('enemySelectContainer');
 
 // Define nomes de inimigos (você pode adaptar)
 enemyNames = ["Goblin", "Orc", "Rat", "Bat", "Skeleton", "Slime", "Spider"];
@@ -755,6 +758,8 @@ enemyFileInput.addEventListener('change', () => {
 toggleEnemyBtn.addEventListener("click", () => {
   enemyMode = !enemyMode;
   toggleEnemyBtn.textContent = enemyMode ? "Adicionar Inimigo (ON)" : "Adicionar Inimigo (OFF)";
+  // Mostra ou esconde o container do select de inimigo
+  enemySelectContainer.style.display = enemyMode ? 'inline-block' : 'none';
 });
 
 function drawEnemyOverlay() {
@@ -816,5 +821,7 @@ document.getElementById('menuLoadEnemies').addEventListener('click', function(e)
   e.preventDefault();
   loadEnemies();
 });
-
-// Remover os botões antigos de carregar tiles, mapa e inimigos do script se houver
+document.getElementById('menuExportMap').addEventListener('click', function(e) {
+  e.preventDefault();
+  exportMap();
+});

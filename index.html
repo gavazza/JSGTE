@@ -16,7 +16,12 @@
           <a href="#" id="menuLoadEnemies">Inimigos</a>
         </div>
       </div>
-      <button onclick="exportMap()">Exportar Mapa</button>
+      <div class="dropdown">
+        <button class="dropbtn">Exportar</button>
+        <div class="dropdown-content">
+          <a href="#" id="menuExportMap">Mapa</a>
+        </div>
+      </div>
 	  <button id="toggleRoomMode">Editar Salas (OFF)</button>
 	
 	  <div id="roomSelectContainer">
@@ -26,16 +31,21 @@
 	  
 	  <button id="toggleTileMode">Editar Tiles (OFF)</button>
 	  
-	  <label for="specialTileSelect">Tipo:</label>
-	  <select id="specialTileSelect">
-		<option>trap</option>
-		<option>treasure</option>
-		<option>passage</option>
-	  </select>
-	  
+	  <div id="tileSelectContainer">
+	    <label for="specialTileSelect">Tipo:</label>
+	    <select id="specialTileSelect">
+		  <option>trap</option>
+		  <option>treasure</option>
+		  <option>passage</option>
+	    </select>
+	  </div>
+
 	  <button id="toggleEnemyMode">Adicionar Inimigo (OFF)</button>
-	  <label for="enemySelect">Inimigo:</label>
-	  <select id="enemySelect"></select>
+
+	  <div id="enemySelectContainer">
+	    <label for="enemySelect">Inimigo:</label>
+	    <select id="enemySelect"></select>
+	  </div>
 
 	  <span id="loadedFileName" style="margin-left: 20px; font-style: italic; color: #ccc;"></span>
 	  

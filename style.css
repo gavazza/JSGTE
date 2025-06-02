@@ -82,6 +82,32 @@ nav #specialTileSelect {
   width: 130px; /* ou qualquer valor desejado */
 }
 
+/* Garante que o container do select de tile fique alinhado e bonito */
+#tileSelectContainer {
+  display: none;
+  margin-bottom: 10px;
+}
+#tileSelectContainer label {
+  margin-right: 5px;
+}
+
+#toggleTileMode {
+  width: 130px; /* ou qualquer valor desejado */
+}
+
+/* Garante que o container do select de inimigos fique alinhado e bonito */
+#enemySelectContainer {
+  display: none;
+  margin-bottom: 10px;
+}
+#enemySelectContainer label {
+  margin-right: 5px;
+}
+
+#toggleEnemyMode {
+  width: 160px; /* ou qualquer valor desejado */
+}
+
 .dropdown {
   position: relative;
   display: inline-block;
