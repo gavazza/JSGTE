@@ -12,16 +12,16 @@
 // roomId    : id of the room this tile is part of.
 // passageTo : object that keep the floor index and x,y position of destination tile				   
 class Tile {
-	constructor(index, type=null, roomId=null, passageTo = null, enemyIndex = null) {
+	constructor(index, type=null, typeData = null, roomId=null) {
 		this.index = index;
 		this.type = type;
+		this.typeData = typeData;
 		this.roomId = roomId;
-		this.passageTo = passageTo;
-		this.enemyIndex = enemyIndex;
 		
 		this.searchedForTrap = false;
 		this.searchedForPassage = false;
 		this.enemySpawned = false;
+		thi9s.viewed = false;
 	}
 }
 
@@ -60,7 +60,7 @@ let tileData = Array.from({ length: MAP_HEIGHT }, () =>
     index: 0,
     type: null,
 	typeData: null,
-    roomId: 0,
+    roomId: null,
   }))
 );
 
@@ -292,12 +292,11 @@ overlayCanvas.addEventListener('click', (e) => {
 			tileData[y][x].type = tileType;
 		}
 		
-		////
 		if (tileMode && tileData[y][x].type === "passage") {
 			// Preencher campos se já existirem
-			const existing = tileData[y][x].passageTo || { f: 0, x: 0, y: 0 };
+			const existing = tileData[y][x].typeData || { floor: 0, x: 0, y: 0 };
 
-			document.getElementById("passageFloor").value = existing.f;
+			document.getElementById("passageFloor").value = existing.floor;
 			document.getElementById("passageX").value = existing.x;
 			document.getElementById("passageY").value = existing.y;
 
@@ -306,19 +305,20 @@ overlayCanvas.addEventListener('click', (e) => {
 
 			document.getElementById("passagePopup").style.display = "flex";
 		}
-		////
 		
 		drawSpecialTileOverlay();
 	} 
 	
 	else if (enemyMode) {
 	  const index = parseInt(enemySelect.value);
+
+	  tileData[y][x].type = 'enemy'; 
 	  
-	  if(tileData[y][x].enemyIndex == index) {
-		tileData[y][x].enemyIndex = null;
+	  if(tileData[y][x].typeData == index) {
+		tileData[y][x].typeData = null;
 	  }
 	  else {
-		tileData[y][x].enemyIndex = index;
+		tileData[y][x].typeData = index;
 	  }
 	  
 	  drawEnemyOverlay();
@@ -656,7 +656,7 @@ function drawSpecialTileOverlay() {
         // número da sala
         overlayCtx.fillStyle = 'white';
 		
-		if(tileType === 'trap' || tileType === 'treasure') {
+		if(tileType === 'trap' || tileType === 'treasure' || tileType === 'enemy') {
 			overlayCtx.fillText(tileType, dx + TILE_SIZE/2, dy + TILE_SIZE/2);
 		} else if(tileType === 'passage') {
 			overlayCtx.fillText(tileType, dx + TILE_SIZE/2, (dy + TILE_SIZE/2) - 15);
