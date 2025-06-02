@@ -579,16 +579,18 @@ function undo() {
 
 //// ROOM
 let roomMode = false;
+const roomSelectContainer = document.getElementById('roomSelectContainer');
 const toggleRoomBtn = document.getElementById('toggleRoomMode');
-const roomSelect   = document.getElementById('roomSelect');
+const roomSelect = document.getElementById('roomSelect');
 
 toggleRoomBtn.addEventListener('click', (e) => {
   roomMode = !roomMode;
   toggleRoomBtn.textContent = roomMode ? 'Editar Salas (ON)' : 'Editar Salas (OFF)';
-  // Limpa qualquer highlight de tile normal
+  // Mostra ou esconde o container do select de sala
+  roomSelectContainer.style.display = roomMode ? 'inline-block' : 'none';
   overlayCtx.clearRect(0, 0, overlayCanvas.width, overlayCanvas.height);
-  if (!roomMode) drawCurrentTile(e); // volta ao highlight normal
-  else drawRoomOverlay(); // mostra todos os IDs já atribuídos
+  if (!roomMode) drawCurrentTile(e);
+  else drawRoomOverlay();
 });
 
 

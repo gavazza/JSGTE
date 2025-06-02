@@ -68,3 +68,16 @@ nav #specialTileSelect {
   margin: 5px 0;
   width: 100px;
 }
+
+/* Garante que o container do select de sala fique alinhado e bonito */
+#roomSelectContainer {
+  display: none;
+  margin-bottom: 10px;
+}
+#roomSelectContainer label {
+  margin-right: 5px;
+}
+
+#toggleRoomMode {
+  width: 130px; /* ou qualquer valor desejado */
+}
