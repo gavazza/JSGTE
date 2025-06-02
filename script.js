@@ -583,16 +583,6 @@ const roomSelectContainer = document.getElementById('roomSelectContainer');
 const toggleRoomBtn = document.getElementById('toggleRoomMode');
 const roomSelect = document.getElementById('roomSelect');
 
-toggleRoomBtn.addEventListener('click', (e) => {
-  roomMode = !roomMode;
-  toggleRoomBtn.textContent = roomMode ? 'Editar Salas (ON)' : 'Editar Salas (OFF)';
-  // Mostra ou esconde o container do select de sala
-  roomSelectContainer.style.display = roomMode ? 'inline-block' : 'none';
-  overlayCtx.clearRect(0, 0, overlayCanvas.width, overlayCanvas.height);
-  if (!roomMode) drawCurrentTile(e);
-  else drawRoomOverlay();
-});
-
 
 function drawRoomOverlay() {
   // Limpa tudo
@@ -636,18 +626,6 @@ let tileMode = false;
 const tileSelectContainer = document.getElementById('tileSelectContainer');
 const toggleTileBtn = document.getElementById('toggleTileMode');
 const specialTileSelect   = document.getElementById('specialTileSelect');
-	
-toggleTileBtn.addEventListener('click', (e) => {
-  tileMode = !tileMode;
-  toggleTileBtn.textContent = tileMode ? 'Editar Tiles (ON)' : 'Editar Tiles (OFF)';
-  // Mostra ou esconde o container do select de sala
-  tileSelectContainer.style.display = tileMode ? 'inline-block' : 'none';
-  // Limpa qualquer highlight de tile normal
-  overlayCtx.clearRect(0, 0, overlayCanvas.width, overlayCanvas.height);
-  if (!tileMode) drawCurrentTile(e); // volta ao highlight normal
-  else drawSpecialTileOverlay(); // mostra todos os tile especiais já atribuídos
-});
-
 
 function drawSpecialTileOverlay() {
   // Limpa tudo
@@ -755,13 +733,6 @@ enemyFileInput.addEventListener('change', () => {
   img.src = URL.createObjectURL(file);
 });
 
-toggleEnemyBtn.addEventListener("click", () => {
-  enemyMode = !enemyMode;
-  toggleEnemyBtn.textContent = enemyMode ? "Adicionar Inimigo (ON)" : "Adicionar Inimigo (OFF)";
-  // Mostra ou esconde o container do select de inimigo
-  enemySelectContainer.style.display = enemyMode ? 'inline-block' : 'none';
-});
-
 function drawEnemyOverlay() {
   if (!enemyImage) return;
 
@@ -825,3 +796,61 @@ document.getElementById('menuExportMap').addEventListener('click', function(e) {
   e.preventDefault();
   exportMap();
 });
+
+////
+const editMapRadio = document.getElementById('editMapRadio');
+const editTileRadio = document.getElementById('editTileRadio');
+const editRoomRadio = document.getElementById('editRoomRadio');
+const editEnemyRadio = document.getElementById('editEnemyRadio');
+
+// Helper para desativar todos os modos
+function resetEditModes(e) {
+  roomMode = false;
+  tileMode = false;
+  enemyMode = false;
+  roomSelectContainer.style.display = 'none';
+  tileSelectContainer.style.display = 'none';
+  enemySelectContainer.style.display = 'none';
+  overlayCtx.clearRect(0, 0, overlayCanvas.width, overlayCanvas.height);
+  drawCurrentTile(e);
+}
+
+// Mapa
+editMapRadio.addEventListener('change', (e) => {
+  if (editMapRadio.checked) {
+    resetEditModes(e);
+  }
+});
+
+// Tile
+editTileRadio.addEventListener('change', (e) => {
+  console.log('entrou editTileRadio');
+  if (editTileRadio.checked) {
+    resetEditModes(e);
+    tileMode = true;
+    tileSelectContainer.style.display = 'inline-block';
+    drawSpecialTileOverlay();
+  }
+  console.log('saiu editTileRadio');
+});
+
+// Sala
+editRoomRadio.addEventListener('change', (e) => {
+  if (editRoomRadio.checked) {
+    resetEditModes(e);
+    roomMode = true;
+    roomSelectContainer.style.display = 'inline-block';
+    drawRoomOverlay();
+  }
+});
+
+// Inimigo
+editEnemyRadio.addEventListener('change', (e) => {
+  if (editEnemyRadio.checked) {
+    resetEditModes(e);
+    enemyMode = true;
+    enemySelectContainer.style.display = 'inline-block';
+    drawEnemyOverlay && drawEnemyOverlay();
+  }
+});
+////

@@ -22,14 +22,20 @@
           <a href="#" id="menuExportMap">Mapa</a>
         </div>
       </div>
-	  <button id="toggleRoomMode">Editar Salas (OFF)</button>
+	  <div class="dropdown">
+		<button class="dropbtn">Editar</button>
+	    <div class="dropdown-content" id="editDropdown">
+		  <label><input type="radio" name="editMode" id="editMapRadio" checked> Mapa</label>
+		  <label><input type="radio" name="editMode" id="editTileRadio"> Tile</label>
+		  <label><input type="radio" name="editMode" id="editRoomRadio"> Sala</label>
+		  <label><input type="radio" name="editMode" id="editEnemyRadio"> Inimigo</label>
+	    </div>
+	  </div>
 	
 	  <div id="roomSelectContainer">
 	    <label for="roomSelect">Sala:</label>
 	    <select id="roomSelect"></select>
 	  </div>
-	  
-	  <button id="toggleTileMode">Editar Tiles (OFF)</button>
 	  
 	  <div id="tileSelectContainer">
 	    <label for="specialTileSelect">Tipo:</label>
@@ -39,8 +45,6 @@
 		  <option>passage</option>
 	    </select>
 	  </div>
-
-	  <button id="toggleEnemyMode">Adicionar Inimigo (OFF)</button>
 
 	  <div id="enemySelectContainer">
 	    <label for="enemySelect">Inimigo:</label>

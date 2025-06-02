@@ -78,10 +78,6 @@ nav #specialTileSelect {
   margin-right: 5px;
 }
 
-#toggleRoomMode {
-  width: 130px; /* ou qualquer valor desejado */
-}
-
 /* Garante que o container do select de tile fique alinhado e bonito */
 #tileSelectContainer {
   display: none;
@@ -91,10 +87,6 @@ nav #specialTileSelect {
   margin-right: 5px;
 }
 
-#toggleTileMode {
-  width: 130px; /* ou qualquer valor desejado */
-}
-
 /* Garante que o container do select de inimigos fique alinhado e bonito */
 #enemySelectContainer {
   display: none;
@@ -102,10 +94,6 @@ nav #specialTileSelect {
 }
 #enemySelectContainer label {
   margin-right: 5px;
-}
-
-#toggleEnemyMode {
-  width: 160px; /* ou qualquer valor desejado */
 }
 
 .dropdown {
@@ -148,4 +136,23 @@ nav #specialTileSelect {
 }
 .dropdown:hover .dropbtn {
   background-color: #666;
+}
+
+.dropdown-content label {
+  color: #222;
+  background: #f9f9f9;
+  width: 100%;
+  padding: 8px 16px;
+  cursor: pointer;
+  display: block;
+  border-bottom: 1px solid #eee;
+}
+.dropdown-content label:last-child {
+  border-bottom: none;
+}
+.dropdown-content label:hover {
+  background: #e0e0e0;
+}
+.dropdown-content input[type="radio"] {
+  margin-right: 8px;
 }
