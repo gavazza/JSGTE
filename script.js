@@ -803,3 +803,18 @@ function drawEnemyOverlay() {
   }
 }
 ////
+
+document.getElementById('menuLoadTile').addEventListener('click', function(e) {
+  e.preventDefault();
+  loadTiles();
+});
+document.getElementById('menuLoadMap').addEventListener('click', function(e) {
+  e.preventDefault();
+  loadMap();
+});
+document.getElementById('menuLoadEnemies').addEventListener('click', function(e) {
+  e.preventDefault();
+  loadEnemies();
+});
+
+// Remover os botões antigos de carregar tiles, mapa e inimigos do script se houver

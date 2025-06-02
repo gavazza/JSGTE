@@ -8,8 +8,14 @@
 <body>
   <header>
     <nav>
-      <button onclick="loadTiles()">Carregar Tiles</button>
-	  <button onclick="loadMap()">Carregar Mapa</button>
+      <div class="dropdown">
+        <button class="dropbtn">Carregar</button>
+        <div class="dropdown-content">
+          <a href="#" id="menuLoadTile">Tile</a>
+          <a href="#" id="menuLoadMap">Mapa</a>
+          <a href="#" id="menuLoadEnemies">Inimigos</a>
+        </div>
+      </div>
       <button onclick="exportMap()">Exportar Mapa</button>
 	  <button id="toggleRoomMode">Editar Salas (OFF)</button>
 	
@@ -27,7 +33,6 @@
 		<option>passage</option>
 	  </select>
 	  
-	  <button onclick="loadEnemies()">Carregar Inimigos</button>
 	  <button id="toggleEnemyMode">Adicionar Inimigo (OFF)</button>
 	  <label for="enemySelect">Inimigo:</label>
 	  <select id="enemySelect"></select>
